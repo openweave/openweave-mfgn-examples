@@ -322,7 +322,7 @@ int HardwarePlatform::InitButtons(void)
         VerifyOrExit(ret == NRF_SUCCESS, );
     }
 
-    for (int i = 0; i < BUTTONS_NUMBER; i++)
+    for (int i = 0; i < PLATFORM_BUTTONS_COUNT; i++)
     {
         mButtons[0].Init();
     }
@@ -343,7 +343,7 @@ Button * HardwarePlatform::GetButtons(void)
 
 int HardwarePlatform::GetButtonIndex(uint8_t pinNo)
 {
-    for (int i = 0; i < BUTTONS_NUMBER; i++)
+    for (int i = 0; i < PLATFORM_BUTTONS_COUNT; i++)
     {
         if (mButtonPinNos[i] == pinNo)
         {

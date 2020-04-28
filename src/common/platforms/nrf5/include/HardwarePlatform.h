@@ -28,8 +28,8 @@
 #include "Button.h"
 #include "boards.h"
 
-#define PLATFORM_LEDS_COUNT 4
-#define PLATFORM_BUTTONS_COUNT 4
+#define PLATFORM_LEDS_COUNT LEDS_NUMBER
+#define PLATFORM_BUTTONS_COUNT BUTTONS_NUMBER
 #define PLATFORM_BUTTON_DEBOUNCE_PERIOD_MS 50
 
 class HardwarePlatform
@@ -55,9 +55,9 @@ public:
     //    uint8_t GetPinNoFromButtonId(uint8_t buttonId);
 
 private:
-    LED mLEDs[BUTTONS_NUMBER];
-    Button mButtons[BUTTONS_NUMBER];
-    uint8_t mButtonPinNos[BUTTONS_NUMBER];
+    LED mLEDs[PLATFORM_LEDS_COUNT];
+    Button mButtons[PLATFORM_BUTTONS_COUNT];
+    uint8_t mButtonPinNos[PLATFORM_BUTTONS_COUNT];
 
     // Initialize GPIO artifacts.
     void InitLEDs(void);
