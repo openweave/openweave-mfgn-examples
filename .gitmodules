@@ -1,0 +1,9 @@
+[submodule "third_party/openweave-core"]
+	path = third_party/openweave-core
+	url = git@github.com:openweave/openweave-core.git
+[submodule "third_party/openthread"]
+	path = third_party/openthread
+	url = git@github.com:openthread/openthread.git
+[submodule "third_party/printf"]
+	path = third_party/printf
+	url = https://github.com/mpaland/printf
