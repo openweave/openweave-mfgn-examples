@@ -247,7 +247,7 @@ currently provided and not generated.
 allowing us to: 1) include the resource definition in the source code, 2) generate the 
 schema files via WDLC.]
 
-####Device Traits — Sinks and Sources
+#### Device Traits — Sinks and Sources
 
 <b>src/examples/<device-type>/traits</b><br><br>
 The traits directory hosts all the “source” and “sink” classes for the device traits.  
