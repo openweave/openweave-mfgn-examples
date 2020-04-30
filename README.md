@@ -249,7 +249,7 @@ schema files via WDLC.]
 
 #### Device Traits — Sinks and Sources
 
-<b>src/examples/<device-type>/traits</b><br><br>
+<b>src/examples/[device-type]/traits</b><br><br>
 The traits directory hosts all the “source” and “sink” classes for the device traits.  
 [FIXME: See FIXME for WDMFeature. This doc on WDM should include information about sinks 
 and sources as well.]
