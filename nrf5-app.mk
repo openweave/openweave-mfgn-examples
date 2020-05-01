@@ -20,7 +20,7 @@
 #         Makefile for building the sample apps on the NRF5 platform.
 #
 
-PROJECT_ROOT := $(realpath .)
+PROJECT_ROOT ?= $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
 
 OPENWEAVE_ROOT ?= $(PROJECT_ROOT)/third_party/openweave-core
 
