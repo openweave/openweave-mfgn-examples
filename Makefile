@@ -20,7 +20,7 @@
 #         Makefile for building the OpenWeave Sample Applications.
 #
 
-PROJECT_ROOT := $(realpath .)
+PROJECT_ROOT := $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
 
 ifeq ($(PLATFORM),nrf5)
     include $(PROJECT_ROOT)/nrf5-app.mk
