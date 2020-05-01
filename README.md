@@ -344,8 +344,8 @@ src/examples/[device-type]/platforms/<b>[platform]</b>/ldscripts/<b>[filename]</
 
 ## Applications documentation
 
-* [Lock](examples/lock/README.md)
-* [Open/Close Sensor](examples/ocsensor/README.md)
+* [Lock](src/examples/lock/README.md)
+* [Open/Close Sensor](src/examples/ocsensor/README.md)
 
 [OPENTHREAD]: https://github.com/openthread/openthread
 [OPENWEAVE]: https://github.com/openweave/openweave-core
