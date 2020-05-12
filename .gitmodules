@@ -1,9 +1,12 @@
 [submodule "third_party/openweave-core"]
 	path = third_party/openweave-core
-	url = git@github.com:openweave/openweave-core.git
+	url = https://github.com/openweave/openweave-core.git
 [submodule "third_party/openthread"]
 	path = third_party/openthread
-	url = git@github.com:openthread/openthread.git
+	url = https://github.com/SiliconLabs/openthread.git
 [submodule "third_party/printf"]
 	path = third_party/printf
 	url = https://github.com/mpaland/printf
+[submodule "third_party/FreeRTOS"]
+	path = third_party/FreeRTOS
+	url = https://github.com/FreeRTOS/FreeRTOS.git

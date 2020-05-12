@@ -36,13 +36,9 @@
 #include <openthread/error.h>
 #include <openthread/icmp6.h>
 #include <openthread/platform/openthread-system.h>
-extern "C" {
-#include <openthread/platform/platform-softdevice.h>
-}
 
 #include <Weave/DeviceLayer/WeaveDeviceLayer.h>
 #include <Weave/DeviceLayer/ThreadStackManager.h>
-#include <Weave/DeviceLayer/nRF5/GroupKeyStoreImpl.h> // FIXME
 #include <Weave/DeviceLayer/internal/testing/ConfigUnitTest.h>
 #include <Weave/DeviceLayer/internal/testing/GroupKeyStoreUnitTest.h>
 #include <Weave/DeviceLayer/internal/testing/SystemClockUnitTest.h>
@@ -73,12 +69,12 @@ int main(void)
     // Platform-specific initializations. Weave logging not setup yet.
     GetHardwarePlatform().Init();
 
+    otSysInit(0, NULL); // This must go here for efr32 (i.e. before either OW or OT stack inits)
     WeaveLogProgress(Support, "Initializing the Weave stack");
     ret = PlatformMgr().InitWeaveStack();
     SuccessOrAbort(ret, "PlatformMgr().InitWeaveStack() failed.");
 
     WeaveLogProgress(Support, "Initializing the OpenThread stack");
-    otSysInit(0, NULL);
     ret = ThreadStackMgr().InitThreadStack();
     SuccessOrAbort(ret, "ThreadStackMgr().InitThreadStack() failed.");
 
@@ -127,7 +123,7 @@ int main(void)
      *
      */
 
-    /* FIXME
+    /* FIXME - no platform specifics in here!
     // Activate deep sleep mode
     SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 
@@ -140,6 +136,8 @@ int main(void)
 
     WeaveLogProgress(Support, "Starting the FreeRTOS scheduler");
     vTaskStartScheduler();
+
+    //--------------------------------------------------------------------------
 
     // Should never get here
     WeaveLogProgress(Support, "vTaskStartScheduler() failed");

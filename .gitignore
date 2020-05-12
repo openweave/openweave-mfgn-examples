@@ -1,3 +1,7 @@
+# Build System
 build/
 .idea/
 cmake-build-debug/
+
+# Text editors
+.*.sw[a-z]
