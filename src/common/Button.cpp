@@ -104,15 +104,22 @@ Button::ButtonPressState Button::UpdateButtonPressState(void)
         return mButtonPressState;
 
     uint32_t now = ::nl::Weave::System::Platform::Layer::GetClock_MonotonicMS();
+
     if (now - mButtonPressStartedMs >= LONG_PRESS_ACTIVATION_COMPLETE_MS)
     {
-        WeaveLogProgress(Support, "Moving to kButtonPressState_Long_Completed");
-        mButtonPressState = kButtonPressState_Long_Completed;
+        if (mButtonPressState != kButtonPressState_Long_Completed)
+        {
+            WeaveLogProgress(Support, "Moving to kButtonPressState_Long_Completed");
+            mButtonPressState = kButtonPressState_Long_Completed;
+        }
     }
     else if (now - mButtonPressStartedMs >= LONG_PRESS_ACTIVATION_START_MS)
     {
-        WeaveLogProgress(Support, "Moving to kButtonPressState_Long_Started");
-        mButtonPressState = kButtonPressState_Long_Started;
+        if (mButtonPressState != kButtonPressState_Long_Started)
+        {
+            WeaveLogProgress(Support, "Moving to kButtonPressState_Long_Started");
+            mButtonPressState = kButtonPressState_Long_Started;
+        }
     }
     return mButtonPressState;
 }

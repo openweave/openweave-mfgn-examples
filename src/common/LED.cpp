@@ -29,7 +29,6 @@ void LED::Init(PlatformLED * platformLEDPtr)
     mBlinkOnTimeMS    = 0;
     mBlinkOffTimeMS   = 0;
 
-    // IN HW platform: nrf_gpio_cfg_output(gpioNum);
     mState = true; // Forces the setting of the LED.
     Set(false);
 }
@@ -43,6 +42,7 @@ void LED::Set(bool state)
 {
     mBlinkOnTimeMS  = 0;
     mBlinkOffTimeMS = 0;
+    mLastChangeTimeUS = ::nl::Weave::System::Platform::Layer::GetClock_MonotonicHiRes();
     DoSet(state);
 }
 

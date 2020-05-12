@@ -32,6 +32,18 @@ using namespace ::nl::Weave::Profiles::SoftwareUpdate;
 // Singleton.
 AppSoftwareUpdateManager AppSoftwareUpdateManager::sAppSoftwareUpdateManager;
 
+#ifndef APP_ERROR_CHECK
+    #define APP_ERROR_CHECK(ERR_CODE)                       \
+    do                                                      \
+    {                                                       \
+        const uint32_t LOCAL_ERR_CODE = (ERR_CODE);         \
+        if (LOCAL_ERR_CODE != 0)                            \
+        {                                                   \
+            return;                                         \
+        }                                                   \
+    } while (0)
+#endif
+
 void AppSoftwareUpdateManager::Init(void)
 {
     // WEAVE_ERROR SetEventCallback(void * const aAppState, const EventCallback aEventCallback);

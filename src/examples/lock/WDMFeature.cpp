@@ -17,8 +17,6 @@
 
 #include "WDMFeature.h"
 
-#include "nrf.h" // FIXME
-
 #include <Weave/DeviceLayer/WeaveDeviceLayer.h>
 
 using namespace ::nl;
@@ -342,15 +340,10 @@ void WDMFeature::PlatformEventHandler(const WeaveDeviceEvent * event, intptr_t a
 WEAVE_ERROR WDMFeature::Init()
 {
     WEAVE_ERROR err;
-    int ret;
     Binding * binding;
 
-    // FIXME: Remove the use of NRF_ERROR_NULL
-    // Once this is fixed, we can remove the nrf5 dependency. Could we use this?
-    //    err = mPublisherLock.Init();
-    //    SuccessOrExit(err);
-    ret = mPublisherLock.Init();
-    VerifyOrExit(ret != NRF_ERROR_NULL, err = WEAVE_ERROR_NO_MEMORY);
+    err = mPublisherLock.Init();
+    SuccessOrExit(err);
 
     PlatformMgr().AddEventHandler(PlatformEventHandler);
 

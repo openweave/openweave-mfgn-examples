@@ -23,7 +23,6 @@
 
 #include "BoltLockTraitDataSource.h"
 #include "BoltLockTrait.h"
-#include "nrf_log.h"
 #include "WDMFeature.h"
 #include <DeviceController.h>
 #include <AppTask.h>
@@ -203,7 +202,7 @@ WEAVE_ERROR BoltLockTraitDataSource::GetLeafData(PropertyPathHandle aLeafHandle,
         break;
 
     default:
-        NRF_LOG_INFO("Unexpected Leaf");
+        WeaveLogError(Support, "Unexpected Leaf");
         break;
     }
 
@@ -225,7 +224,7 @@ void BoltLockTraitDataSource::OnCustomCommand(nl::Weave::Profiles::DataManagemen
     {
         if (aMustBeVersion != GetVersion())
         {
-            NRF_LOG_INFO("Actual version is 0x%X, while must-be version is: 0x%" PRIx64, GetVersion(), aMustBeVersion);
+            WeaveLogError(Support, "Actual version is 0x%X, while must-be version is: 0x%" PRIx64, GetVersion(), aMustBeVersion);
             reportProfileId  = nl::Weave::Profiles::kWeaveProfile_WDM;
             reportStatusCode = kStatus_VersionMismatch;
             goto exit;
@@ -240,7 +239,7 @@ void BoltLockTraitDataSource::OnCustomCommand(nl::Weave::Profiles::DataManagemen
         err = System::Platform::Layer::GetClock_RealTimeMS(currentTime);
         if (err == WEAVE_SYSTEM_ERROR_REAL_TIME_NOT_SYNCED)
         {
-            NRF_LOG_INFO("BoltLockChangeRequest Command failed!");
+            WeaveLogError(Support, "BoltLockChangeRequest Command failed!");
             reportStatusCode = kStatus_NotTimeSyncedYet;
             goto exit;
         }
@@ -249,7 +248,7 @@ void BoltLockTraitDataSource::OnCustomCommand(nl::Weave::Profiles::DataManagemen
         // error out
         if (aExpiryTimeMicroSecond < static_cast<int64_t>(currentTime))
         {
-            NRF_LOG_INFO("BoltLockChangeRequest Command Expired!");
+            WeaveLogError(Support, "BoltLockChangeRequest Command Expired!");
             reportStatusCode = kStatus_RequestExpiredInTime;
             goto exit;
         }
@@ -262,7 +261,7 @@ void BoltLockTraitDataSource::OnCustomCommand(nl::Weave::Profiles::DataManagemen
 
     VerifyOrExit(aCommandType == BoltLockTrait::kBoltLockChangeRequestId, err = WEAVE_ERROR_NOT_IMPLEMENTED);
 
-    NRF_LOG_INFO("BoltLockChangeRequest Command Valid!");
+    WeaveLogError(Support, "BoltLockChangeRequest Command Valid!");
 
     {
         int32_t changeRequestParam_State;
@@ -300,7 +299,7 @@ void BoltLockTraitDataSource::OnCustomCommand(nl::Weave::Profiles::DataManagemen
 
             default:
                 // Unrecognized arguments are not allowed.
-                NRF_LOG_INFO("Unexpected Tag in CustomCommand");
+                WeaveLogError(Support, "Unexpected Tag in CustomCommand");
                 ExitNow(err = WEAVE_ERROR_INVALID_TLV_TAG);
             }
         }
@@ -332,7 +331,7 @@ void BoltLockTraitDataSource::OnCustomCommand(nl::Weave::Profiles::DataManagemen
     // Generate a success response right here.
     if (err == WEAVE_NO_ERROR)
     {
-        NRF_LOG_INFO("BoltLockChangeRequest Command Parsed!");
+        WeaveLogError(Support, "BoltLockChangeRequest Command Parsed!");
 
         PacketBuffer * msgBuf = PacketBuffer::New();
         if (NULL == msgBuf)
@@ -342,14 +341,14 @@ void BoltLockTraitDataSource::OnCustomCommand(nl::Weave::Profiles::DataManagemen
             ExitNow(err = WEAVE_ERROR_NO_MEMORY);
         }
 
-        NRF_LOG_INFO("Sending Success Response to BoltLockChangeRequest Command");
+        WeaveLogError(Support, "Sending Success Response to BoltLockChangeRequest Command");
         aCommand->SendResponse(GetVersion(), msgBuf);
         aCommand = NULL;
         msgBuf   = NULL;
     }
     else
     {
-        NRF_LOG_INFO("BoltLockChangeRequest Command Error : %d", err);
+        WeaveLogError(Support, "BoltLockChangeRequest Command Error : %d", err);
     }
 
 exit:

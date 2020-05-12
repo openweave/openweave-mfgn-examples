@@ -15,7 +15,7 @@
 #   limitations under the License.
 #
 
-# 
+#
 #   @file
 #         Makefile for building the OpenWeave Sample Applications.
 #
@@ -24,6 +24,8 @@ PROJECT_ROOT := $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
 
 ifeq ($(PLATFORM),nrf5)
     include $(PROJECT_ROOT)/nrf5-app.mk
-else ifeq ($(APP),silabs)
-    include $(PROJECT_ROOT)/silabs.mk
+endif
+
+ifeq ($(PLATFORM),efr32)
+    include $(PROJECT_ROOT)/efr32-app.mk
 endif

@@ -331,6 +331,8 @@ Overrides the default platform configuration.
 
 For nrf5: `src/common/platforms/nrf5/include/app_config.h`
 
+For efr32: `src/common/platforms/efr32/include/app_config.h`
+
 <pre>
 src/examples/[device-type]/platforms/<b>[platform]</b>/ldscripts/<b>[filename]</b>.ld
 </pre>
@@ -339,8 +341,8 @@ src/examples/[device-type]/platforms/<b>[platform]</b>/ldscripts/<b>[filename]</
 
 ## Hardware platforms documentation
 
-* [Nordic nrf5](common/nrf5/README.md)
-* [Silicon Labs efr32](common/nrf5/README.md)
+* [Nordic nrf5](src/common/platforms/nrf5/README.md)
+* [Silicon Labs efr32](src/common/platforms/efr32/README.md)
 
 ## Applications documentation
 

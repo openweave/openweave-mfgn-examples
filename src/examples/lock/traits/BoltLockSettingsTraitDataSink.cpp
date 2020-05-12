@@ -20,10 +20,8 @@
  *      A trait data sink implementation for the Weave Security BoltLockSettingsTrait.
  */
 
-#include "BoltLockSettingsTraitDataSink.h"> "
+#include "BoltLockSettingsTraitDataSink.h"
 #include "BoltLockSettingsTrait.h"
-
-#include "nrf_log.h"
 
 #include "DeviceController.h"
 
@@ -49,7 +47,7 @@ BoltLockSettingsTraitDataSink::SetLeafData(PropertyPathHandle aLeafHandle, TLVRe
 
         GetDeviceController().EnableAutoLock(auto_relock_on);
 
-        NRF_LOG_INFO("Auto Relock %s", (auto_relock_on) ? "ENABLED" : "DISABLED");
+        WeaveLogProgress(Support, "Auto Relock %s", (auto_relock_on) ? "ENABLED" : "DISABLED");
         break;
     }
 
@@ -60,7 +58,7 @@ BoltLockSettingsTraitDataSink::SetLeafData(PropertyPathHandle aLeafHandle, TLVRe
 
         GetDeviceController().SetAutoLockDuration(auto_lock_duration);
 
-        NRF_LOG_INFO("Auto Relock Duration (secs): %u", auto_lock_duration);
+        WeaveLogProgress(Support, "Auto Relock Duration (secs): %u", auto_lock_duration);
         break;
     }
 

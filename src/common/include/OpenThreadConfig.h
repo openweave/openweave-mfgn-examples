@@ -26,32 +26,37 @@
 #ifndef OPENTHREAD_PLATFORM_CONFIG_H
 #define OPENTHREAD_PLATFORM_CONFIG_H
 
-// Disable the Nordic-supplied OpenThread logging facilities and use
+// Disable the platform vendor supplied OpenThread logging facilities and use
 // the facilities provided by the OpenWeave Device Layer (see
-// openweave/src/adaptations/device-layer/nRF5/Logging.cpp).
+// openweave/src/adaptations/device-layer/xxxx/Logging.cpp).
 #define OPENTHREAD_CONFIG_LOG_OUTPUT OPENTHREAD_CONFIG_LOG_OUTPUT_APP
+
+// Turn on a moderate level of logging in OpenThread
+#define OPENTHREAD_CONFIG_LOG_LEVEL OT_LOG_LEVEL_NOTE
+
+// Enable use of external heap allocator (calloc/free) for OpenThread.
+#define OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE 1
+
+// EFR32MG21A020F1024IM32 has 96k of RAM. Reduce the number of buffers to
+// conserve RAM for this Series 2 part.
+#if defined(EFR32MG21A020F1024IM32)
+#define OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS 22
+#endif
 
 // When operating in a less than ideal RF environment, having a more forgiving configuration
 // of OpenThread makes thread a great deal more reliable.
-#define OPENTHREAD_CONFIG_ADDRESS_QUERY_MAX_RETRY_DELAY 120 // default is 28800
-#define OPENTHREAD_CONFIG_MAC_MAX_FRAME_RETRIES_DIRECT 15   // default is 3
-#define OPENTHREAD_CONFIG_MAC_MAX_FRAME_RETRIES_INDIRECT 1  // default is 0
-#define OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_POLLS 16 // default is 4
+#define OPENTHREAD_CONFIG_TMF_ADDRESS_QUERY_MAX_RETRY_DELAY 120 // default is 28800
+#define OPENTHREAD_CONFIG_MAC_DEFAULT_MAX_FRAME_RETRIES_DIRECT 15   // default is 3
+#define OPENTHREAD_CONFIG_MAC_DEFAULT_MAX_FRAME_RETRIES_INDIRECT 1  // default is 0
+#define OPENTHREAD_CONFIG_MAC_MAX_TX_ATTEMPTS_INDIRECT_POLLS 16 // default is 4
 
 // Enable periodic parent search to speed up finding a better parent.
-#define OPENTHREAD_CONFIG_ENABLE_PERIODIC_PARENT_SEARCH 1      // default is 0
+#define OPENTHREAD_CONFIG_ENABLE_PERIODIC_PARENT_SEARCH_ENABLE 1      // default is 0
 #define OPENTHREAD_CONFIG_PARENT_SEARCH_RSS_THRESHOLD -45      // default is -65
-#define OPENTHREAD_CONFIG_INFORM_PREVIOUS_PARENT_ON_REATTACH 1 // default is 0
+#define OPENTHREAD_CONFIG_MLE_INFORM_PREVIOUS_PARENT_ON_REATTACH 1 // default is 0
 
 // Use smaller maximum interval to speed up reattaching.
-#define OPENTHREAD_CONFIG_ATTACH_BACKOFF_MAXIMUM_INTERVAL (60 * 10 * 1000) // default 1200000 ms
+#define OPENTHREAD_CONFIG_MLE_ATTACH_BACKOFF_MAXIMUM_INTERVAL (60 * 10 * 1000) // default 1200000 ms
 
-// Use the Nordic-supplied default platform configuration for remainder
-// of OpenThread config options.
-//
-// NB: This file gets included during the build of OpenThread.  Hence
-// it cannot use "openthread" in the path to the included file.
-//
-#include "openthread-core-nrf52840-config.h"
 
 #endif // OPENTHREAD_PLATFORM_CONFIG_H
