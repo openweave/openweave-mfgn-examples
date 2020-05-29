@@ -34,7 +34,8 @@
 #define BUTTON_1_INDEX 0
 #define BUTTON_2_INDEX 1
 
-// Device Association in local network.
+// The time period for which "User Selected Mode" is enabled when it is activated.
+// See doc/DeviceAssociationInLocalNetwor.md.
 #define USER_SELECTED_MODE_TIMEOUT_MS 60000
 
 /**
