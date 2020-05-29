@@ -1,4 +1,4 @@
-# Device Association in Local Network
+# Device association in local network
 
 The OpenWeave Lock and Open/Close Sensor example applications leverage Weave’s 
 simple device association protocol to collaborate together without requiring 
@@ -23,7 +23,7 @@ Note that the multicast message will not work because of Issue
 
 ### Weave artifacts supporting device association
 
-##### DeviceDescription
+##### `DeviceDescription`
 
 At the basis of device assocation, there is the [DeviceDescription profile](https://github.com/openweave/openweave-core/blob/48d41755077abf98871bea413dd25bf09d3fdb09/src/lib/profiles/device-description/DeviceDescription.h). 
 This is a simple protocol that is used to query devices and get specific 
@@ -43,7 +43,7 @@ Server: the lock sends an IdentifyRequest to discover the o/c sensor, and
 the o/c sensor replies with information that the lock can then use to establish 
 this association between the two devices.
 
-##### UserSelectedMode
+##### `UserSelectedMode`
 
 It is important to note that the lock does not want to associate with just any o/c sensor. 
 It only wants to associate with the o/c sensor that is installed on its door. 
@@ -53,12 +53,14 @@ on the device to be placed in that mode.  By means of parameters in the Identify
 possible to request that only devices of a particular type (o/c sensor) that are also in 
 "user selected mode" respond to the query.
 
-### O/C Sensor example app modifications
+### O/C sensor example app modifications
 
-##### Set up UserSelectedMode
+##### Set up `UserSelectedMode`
 
-When a specific button on the developer kit for the ocsensor device is pressed, it places the 
-ocsensor device in “UserSelectedMode”. It is then in a state where it can successfully reply to 
+When a specific button on the developer kit for the ocsensor 
+device is pressed, it places the 
+ocsensor device in “UserSelectedMode”. It is then in a state 
+where it can successfully reply to 
 IdentifyRequest’s.
 
 ```
@@ -71,21 +73,26 @@ void UserSelectedModeButtonHandler()
 }
 ```
 
-##### Set up as a DeviceDescription Server
+##### Set up as a `DeviceDescriptionServer`
 
-As mentioned in section DeviceDescription, ocsensor assumes the server-side role in the device 
+As mentioned in section DeviceDescription, ocsensor assumes the 
+server-side role in the device 
 association established via DeviceDescription. 
 
 Code of interest:
 - [DeviceDescriptionServer.h](https://github.com/openweave/openweave-core/blob/master/src/adaptations/device-layer/include/Weave/DeviceLayer/internal/DeviceDescriptionServer.h)
 - [DeviceDescriptionServer.cpp](https://github.com/openweave/openweave-core/blob/master/src/adaptations/device-layer/DeviceDescriptionServer.cpp)
 
-However, note that ocsensor does not need to implement any code to support its role of DeviceDescription Server since this is a standard profile of Weave.
-The call to ConnectivityMgr().SetUserSelectedModeTimeout() does trigger a call to DeviceDescriptionServer. 
+However, note that ocsensor does not need to implement any code 
+to support its role of DeviceDescription Server since this is a 
+standard profile of Weave.
+The call to ConnectivityMgr().SetUserSelectedModeTimeout() does 
+trigger a call to DeviceDescriptionServer. 
 
-##### Disabling UserSelectedMode
+##### Disabling `UserSelectedMode`
 
-It is important to disable UserSelectedMode with the ocsensor at some point in time to 
+It is important to disable UserSelectedMode with the ocsensor at 
+some point in time to 
 prevent it from being associated with more than one lock.
 
 For example, in a scenario with two locks and two sensors:
@@ -106,9 +113,9 @@ FIXME: To be implemented.
 
 ### Lock sample app modifications
 
-##### Set up as a DeviceDescription Client
-
-As mentioned in section DeviceDescription, the lock assumes the client-side role in the device 
+##### Set up as a `DeviceDescriptionClient`
+As mentioned in section DeviceDescription, the lock assumes the 
+client-side role in the device 
 discovery established via DeviceDescription. 
 
 ```asm
@@ -138,8 +145,10 @@ void LockDeviceController::OnIdentifyResponseReceivedHandler(void *appState, uin
 
 ##### Trigger an association request
 
-When a specific button on the developer kit for the lock device is pressed, it triggers the lock 
-to send an “IdentifyRequest” to find an O/C sensor that is in “association-ready” mode.
+When a specific button on the developer kit for the lock device 
+is pressed, it triggers the lock 
+to send an “IdentifyRequest” to find an O/C sensor that is in 
+“association-ready” mode.
 
 ```asm
 void LockDeviceController::SendIdentifyRequestButtonHandler()
@@ -182,7 +191,9 @@ See [IANAConstants.h](https://github.com/openweave/openweave-core/blob/48d417550
 
 ##### Disabling Device Association requests
 
-It is important to disable device association requests once an association has been successfully 
-established or automatically after a certain period of time if no response was received.
+It is important to disable device association requests once an 
+association has been successfully 
+established or automatically after a certain period of time if 
+no response was received.
 
 FIXME: TBD
