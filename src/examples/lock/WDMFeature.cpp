@@ -36,6 +36,7 @@ using namespace ::nl::Weave::Profiles::DataManagement_Current;
  *  value to preserve battery.
  */
 #define SERVICE_LIVENESS_TIMEOUT_SEC 60 * 1 // 1 minute
+#define OCSENSOR_LIVENESS_TIMEOUT_SEC 60 * 10 // 10 minutes
 
 /** Defines the timeout for a response to any message initiated by the device to the service.
  *  This includes notifies, subscribe confirms, cancels and updates.
@@ -43,6 +44,7 @@ using namespace ::nl::Weave::Profiles::DataManagement_Current;
  *  to account for latency in the message transmission through multiple hops.
  */
 #define SERVICE_MESSAGE_RESPONSE_TIMEOUT_MS 10000
+#define OCSENSOR_MESSAGE_RESPONSE_TIMEOUT_MS 100000
 
 /** Defines the timeout for a message to get retransmitted when no wrm ack or
  *  response has been heard back from the service. This timeout is kept larger
@@ -55,8 +57,10 @@ using namespace ::nl::Weave::Profiles::DataManagement_Current;
  *    would not be interacting directly with a sleepy peer.
  */
 #define SERVICE_WRM_INITIAL_RETRANS_TIMEOUT_MS 2500
+#define OCSENSOR_WRM_INITIAL_RETRANS_TIMEOUT_MS 2500
 
 #define SERVICE_WRM_ACTIVE_RETRANS_TIMEOUT_MS 2500
+#define OCSENSOR_WRM_ACTIVE_RETRANS_TIMEOUT_MS 2500
 
 /** Define the maximum number of retransmissions in WRM
  */
@@ -73,6 +77,7 @@ using namespace ::nl::Weave::Profiles::DataManagement_Current;
  */
 #define SUBSCRIPTION_RESPONSE_TIMEOUT_MS 40000
 
+// FIXME: Have one specific for OCSensor device.
 const nl::Weave::WRMPConfig gWRMPConfigService = { SERVICE_WRM_INITIAL_RETRANS_TIMEOUT_MS, SERVICE_WRM_ACTIVE_RETRANS_TIMEOUT_MS,
                                                    SERVICE_WRM_PIGGYBACK_ACK_TIMEOUT_MS, SERVICE_WRM_MAX_RETRANS };
 
@@ -112,10 +117,25 @@ WEAVE_ERROR PublisherLock::Unlock()
 WDMFeature::WDMFeature(void) :
     mServiceSinkTraitCatalog(ResourceIdentifier(ResourceIdentifier::SELF_NODE_ID), mServiceSinkCatalogStore,
                              sizeof(mServiceSinkCatalogStore) / sizeof(mServiceSinkCatalogStore[0])),
+    mOCSensorSinkTraitCatalog(ResourceIdentifier(ResourceIdentifier::SELF_NODE_ID), mOCSensorSinkCatalogStore,
+                             sizeof(mOCSensorSinkCatalogStore) / sizeof(mOCSensorSinkCatalogStore[0])),
+
     mServiceSourceTraitCatalog(ResourceIdentifier(ResourceIdentifier::SELF_NODE_ID), mServiceSourceCatalogStore,
                                sizeof(mServiceSourceCatalogStore) / sizeof(mServiceSourceCatalogStore[0])),
-    mServiceSubClient(NULL), mServiceCounterSubHandler(NULL), mServiceSubBinding(NULL), mIsSubToServiceEstablished(false),
-    mIsServiceCounterSubEstablished(false), mIsSubToServiceActivated(false)
+
+    mServiceSubClient(NULL),
+    mServiceCounterSubHandler(NULL),
+    mServiceSubBinding(NULL),
+    mIsSubToServiceEstablished(false),
+    mIsServiceCounterSubEstablished(false),
+    mIsSubToServiceActivated(false),
+
+    mOCSensorSubClient(NULL),
+    mOCSensorCounterSubHandler(NULL),
+    mOCSensorSubBinding(NULL),
+    mIsSubToOCSensorEstablished(false),
+    mIsOCSensorCounterSubEstablished(false),
+    mIsSubToOCSensorActivated(false)
 {}
 
 void WDMFeature::AsyncProcessChanges(intptr_t arg)
@@ -151,6 +171,12 @@ bool WDMFeature::AreServiceSubscriptionsEstablished(void)
     return (mIsSubToServiceEstablished && mIsServiceCounterSubEstablished);
 }
 
+bool WDMFeature::AreOCSensorSubscriptionsEstablished(void)
+{
+    return (mIsSubToOCSensorEstablished && mIsOCSensorCounterSubEstablished);
+}
+
+
 void WDMFeature::InitiateSubscriptionToService(void)
 {
     WeaveLogProgress(Support, "Initiating Subscription To Service");
@@ -158,7 +184,14 @@ void WDMFeature::InitiateSubscriptionToService(void)
     mServiceSubClient->InitiateSubscription();
 }
 
-void WDMFeature::TearDownSubscriptions(void)
+void WDMFeature::InitiateSubscriptionToOCSensor(void)
+{
+    WeaveLogProgress(Support, "Initiating Subscription To OCSensor");
+    mOCSensorSubClient->EnableResubscribe(NULL);
+    mOCSensorSubClient->InitiateSubscription();
+}
+
+void WDMFeature::TearDownSubscriptionsService(void)
 {
     if (mServiceSubClient)
     {
@@ -167,6 +200,19 @@ void WDMFeature::TearDownSubscriptions(void)
         {
             mServiceCounterSubHandler->AbortSubscription();
             mServiceCounterSubHandler = NULL;
+        }
+    }
+}
+
+void WDMFeature::TearDownSubscriptionsOCSensor(void)
+{
+    if (mOCSensorSubClient)
+    {
+        mOCSensorSubClient->AbortSubscription();
+        if (mOCSensorCounterSubHandler != NULL)
+        {
+            mOCSensorCounterSubHandler->AbortSubscription();
+            mOCSensorCounterSubHandler = NULL;
         }
     }
 }
@@ -203,6 +249,48 @@ void WDMFeature::HandleServiceBindingEvent(void * appState, ::nl::Weave::Binding
 
     default:
         nl::Weave::Binding::DefaultEventHandler(appState, eventType, inParam, outParam);
+    }
+}
+
+void WDMFeature::HandleOCSensorBindingEvent(void * appState, ::nl::Weave::Binding::EventType eventType,
+                                          const ::nl::Weave::Binding::InEventParam & inParam,
+                                          ::nl::Weave::Binding::OutEventParam & outParam)
+{
+    Binding * binding = inParam.Source;
+
+    WeaveLogDetail(Support, "WDMFeature::HandleOCSensorBindingEvent");
+
+    WDMFeature & _this = GetWDMFeature();
+
+    switch (eventType)
+    {
+        case Binding::kEvent_PrepareRequested:
+            WeaveLogDetail(Support, "Binding::kEvent_PrepareRequested");
+            outParam.PrepareRequested.PrepareError = binding->BeginConfiguration()
+                    .Target_NodeId(_this.mOCSensorNodeId)
+                    .TargetAddress_WeaveFabric(_this.mOCSensorFabricId)
+                    .Transport_UDP_WRM()
+                    .Transport_DefaultWRMPConfig(gWRMPConfigService)
+                    .Exchange_ResponseTimeoutMsec(SERVICE_MESSAGE_RESPONSE_TIMEOUT_MS)
+                    .Security_None() // FIXME
+                    .PrepareBinding();
+            break;
+
+        case Binding::kEvent_PrepareFailed:
+            WeaveLogError(Support, "Failed to prepare OCSensor subscription binding: %s", ErrorStr(inParam.PrepareFailed.Reason));
+            break;
+
+        case Binding::kEvent_BindingFailed:
+            WeaveLogError(Support, "OCSensor subscription binding failed: %s", ErrorStr(inParam.BindingFailed.Reason));
+            break;
+
+        case Binding::kEvent_BindingReady:
+            WeaveLogProgress(Support, "OCSensor subscription binding ready");
+            break;
+
+        default:
+            WeaveLogDetail(Support, "default");
+            nl::Weave::Binding::DefaultEventHandler(appState, eventType, inParam, outParam);
     }
 }
 
@@ -306,7 +394,7 @@ void WDMFeature::HandleOutboundServiceSubscriptionEvent(void * appState, Subscri
             // by sending a CANCEL subscription request.
             if (!inParam.mSubscriptionTerminated.mWillRetry)
             {
-                sWDMFeature.TearDownSubscriptions();
+                sWDMFeature.TearDownSubscriptionsService();
                 sWDMFeature.InitiateSubscriptionToService();
             }
         }
@@ -320,8 +408,67 @@ void WDMFeature::HandleOutboundServiceSubscriptionEvent(void * appState, Subscri
     }
 }
 
+void WDMFeature::HandleOutboundOCSensorSubscriptionEvent(void * appState, SubscriptionClient::EventID eventType,
+                                                        const SubscriptionClient::InEventParam & inParam,
+                                                        SubscriptionClient::OutEventParam & outParam)
+{
+    switch (eventType)
+    {
+        case SubscriptionClient::kEvent_OnSubscribeRequestPrepareNeeded: {
+            outParam.mSubscribeRequestPrepareNeeded.mPathList                  = &(sWDMFeature.mOCSensorSinkTraitPaths[0]);
+            outParam.mSubscribeRequestPrepareNeeded.mPathListSize              = kOCSensorSinkHandle_Max;
+            outParam.mSubscribeRequestPrepareNeeded.mVersionedPathList         = NULL;
+            outParam.mSubscribeRequestPrepareNeeded.mNeedAllEvents             = false;
+            outParam.mSubscribeRequestPrepareNeeded.mLastObservedEventList     = NULL;
+            outParam.mSubscribeRequestPrepareNeeded.mLastObservedEventListSize = 0;
+            outParam.mSubscribeRequestPrepareNeeded.mTimeoutSecMin             = OCSENSOR_LIVENESS_TIMEOUT_SEC;
+            outParam.mSubscribeRequestPrepareNeeded.mTimeoutSecMax             = OCSENSOR_LIVENESS_TIMEOUT_SEC;
+
+            WeaveLogDetail(Support, "Sending outbound OCSensor subscribe request (path count 1)");
+
+            break;
+        }
+        case SubscriptionClient::kEvent_OnSubscriptionEstablished:
+            WeaveLogDetail(Support, "Outbound OCSensor subscription established (sub id %016" PRIX64 ")",
+            inParam.mSubscriptionEstablished.mSubscriptionId);
+            sWDMFeature.mIsSubToOCSensorEstablished = true;
+            break;
+
+        case SubscriptionClient::kEvent_OnSubscriptionTerminated: {
+            WeaveLogDetail(
+                    Support, "Outbound OCSensor subscription terminated: %s",
+                    (inParam.mSubscriptionTerminated.mIsStatusCodeValid)
+                    ? StatusReportStr(inParam.mSubscriptionTerminated.mStatusProfileId, inParam.mSubscriptionTerminated.mStatusCode)
+                    : ErrorStr(inParam.mSubscriptionTerminated.mReason));
+
+            sWDMFeature.mIsSubToOCSensorEstablished = false;
+
+            if (inParam.mSubscriptionTerminated.mClient == sWDMFeature.mOCSensorSubClient)
+            {
+                // This would happen when the service explicitly terminates the subscription
+                // by sending a CANCEL subscription request.
+                if (!inParam.mSubscriptionTerminated.mWillRetry)
+                {
+                    sWDMFeature.TearDownSubscriptionsOCSensor();
+                    sWDMFeature.InitiateSubscriptionToOCSensor();
+                }
+            }
+
+            break;
+        }
+
+        default:
+            SubscriptionClient::DefaultEventHandler(eventType, inParam, outParam);
+            break;
+    }
+}
+
+// FIXME: no clue what is going on here. The WeaveDeviceEvent is not even taken into consideration.
+// What are we supposed to do for OCSensor?
 void WDMFeature::PlatformEventHandler(const WeaveDeviceEvent * event, intptr_t arg)
 {
+    WeaveLogDetail(Support, "******* WDMFeature::PlatformEventHandler **** What exactly is happening here???");
+
     bool serviceSubShouldBeActivated = (ConnectivityMgr().HaveServiceConnectivity() && ConfigurationMgr().IsPairedToAccount());
 
     // If we should be activated and we are not, initiate subscription
@@ -337,6 +484,29 @@ void WDMFeature::PlatformEventHandler(const WeaveDeviceEvent * event, intptr_t a
         // Connectivity might have just come back again. Reset Resubscribe Interval
         sWDMFeature.mServiceSubClient->ResetResubscribe();
     }
+}
+
+/**
+ * Invoked once the association between Lock and OCSensor has been established.
+ */
+WEAVE_ERROR WDMFeature::SetupOCSensorSubscriptions(uint64_t nodeId, uint64_t fabricId) {
+    WEAVE_ERROR err;
+    Binding * binding;
+
+    WeaveLogDetail(Support, "*WDMFeature::SetupOCSensorSubscriptions");
+
+    mOCSensorNodeId = nodeId;
+    mOCSensorFabricId = fabricId;
+
+    binding = ExchangeMgr.NewBinding(HandleOCSensorBindingEvent, this);
+    VerifyOrExit(NULL != binding, err = WEAVE_ERROR_NO_MEMORY);
+    err = mSubscriptionEngine.NewClient(&(mOCSensorSubClient), binding, this, HandleOutboundOCSensorSubscriptionEvent,
+                                        &mOCSensorSinkTraitCatalog, SUBSCRIPTION_RESPONSE_TIMEOUT_MS);
+    SuccessOrExit(err);
+    mOCSensorSubBinding = binding;
+
+exit:
+    return err;
 }
 
 WEAVE_ERROR WDMFeature::Init()
@@ -358,11 +528,17 @@ WEAVE_ERROR WDMFeature::Init()
     mServiceSourceTraitCatalog.AddAt(0, &mDeviceIdentityTraitSource, kSourceHandle_DeviceIdentityTrait);
 
     mServiceSinkTraitCatalog.AddAt(0, &mBoltLockSettingsTraitSink, kSinkHandle_BoltLockSettingsTrait);
-
     for (uint8_t handle = 0; handle < kSinkHandle_Max; handle++)
     {
         mServiceSinkTraitPaths[handle].mTraitDataHandle    = handle;
         mServiceSinkTraitPaths[handle].mPropertyPathHandle = kRootPropertyPathHandle;
+    }
+
+    mOCSensorSinkTraitCatalog.AddAt(0, &mOCSensorSecurityOpenCloseTraitSink, kOCSensorSinkHandle_SecurityOpenCloseTrait);
+    for (uint8_t handle = 0; handle < kOCSensorSinkHandle_Max; handle++)
+    {
+        mOCSensorSinkTraitPaths[handle].mTraitDataHandle    = handle;
+        mOCSensorSinkTraitPaths[handle].mPropertyPathHandle = kRootPropertyPathHandle;
     }
 
     err = mSubscriptionEngine.Init(&ExchangeMgr, this, HandleSubscriptionEngineEvent);
@@ -371,13 +547,12 @@ WEAVE_ERROR WDMFeature::Init()
     err = mSubscriptionEngine.EnablePublisher(&mPublisherLock, &mServiceSourceTraitCatalog);
     SuccessOrExit(err);
 
+    // Bind sinks to service.
     binding = ExchangeMgr.NewBinding(HandleServiceBindingEvent, this);
     VerifyOrExit(NULL != binding, err = WEAVE_ERROR_NO_MEMORY);
-
     err = mSubscriptionEngine.NewClient(&(mServiceSubClient), binding, this, HandleOutboundServiceSubscriptionEvent,
                                         &mServiceSinkTraitCatalog, SUBSCRIPTION_RESPONSE_TIMEOUT_MS);
     SuccessOrExit(err);
-
     mServiceSubBinding = binding;
 
     WeaveLogProgress(Support, "WDMFeature Init Complete");

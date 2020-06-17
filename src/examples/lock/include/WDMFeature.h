@@ -25,6 +25,7 @@
 #include "BoltLockTraitDataSource.h"
 #include "DeviceIdentityTraitDataSource.h"
 #include "BoltLockSettingsTraitDataSink.h"
+#include "OCSensorSecurityOpenCloseTraitDataSink.h"
 
 #include "FreeRTOS.h"
 #include "semphr.h"
@@ -32,7 +33,7 @@
 class PublisherLock : public nl::Weave::Profiles::DataManagement::IWeavePublisherLock
 {
 public:
-    // Creates a recursice mutex
+    // Creates a recursive mutex
     int Init();
 
     // Takes the mutex recursively.
@@ -60,9 +61,14 @@ public:
     WDMFeature(void);
     WEAVE_ERROR Init(void);
     void ProcessTraitChanges(void);
-    void TearDownSubscriptions(void);
+
+    void TearDownSubscriptionsService(void);
+    void TearDownSubscriptionsOCSensor(void);
 
     bool AreServiceSubscriptionsEstablished(void);
+    bool AreOCSensorSubscriptionsEstablished(void);
+
+    WEAVE_ERROR SetupOCSensorSubscriptions(uint64_t nodeId, uint64_t fabricId);
 
     BoltLockTraitDataSource & GetBoltLockTraitDataSource(void);
 
@@ -86,56 +92,92 @@ private:
         kSinkHandle_Max
     };
 
+    enum OCSensorSinkTraitHandle
+    {
+      kOCSensorSinkHandle_SecurityOpenCloseTrait = 0,
+
+      kOCSensorSinkHandle_Max
+    };
+
     // Published Traits
     BoltLockTraitDataSource mBoltLockTraitSource;
     DeviceIdentityTraitDataSource mDeviceIdentityTraitSource;
 
-    // Subscribed Traits
+    // Subscribed Traits from Service
     BoltLockSettingsTraitDataSink mBoltLockSettingsTraitSink;
 
+    // Subscribed Traits from OCSensor.
+    OCSensorSecurityOpenCloseTraitDataSink mOCSensorSecurityOpenCloseTraitSink;
+
     void InitiateSubscriptionToService(void);
+    void InitiateSubscriptionToOCSensor(void);
+
     static void AsyncProcessChanges(intptr_t arg);
 
     static void PlatformEventHandler(const ::nl::Weave::DeviceLayer::WeaveDeviceEvent * event, intptr_t arg);
     static void HandleSubscriptionEngineEvent(void * appState, SubscriptionEngine::EventID eventType,
                                               const SubscriptionEngine::InEventParam & inParam,
                                               SubscriptionEngine::OutEventParam & outParam);
+
     static void HandleServiceBindingEvent(void * appState, ::nl::Weave::Binding::EventType eventType,
                                           const ::nl::Weave::Binding::InEventParam & inParam,
                                           ::nl::Weave::Binding::OutEventParam & outParam);
     static void HandleOutboundServiceSubscriptionEvent(void * appState, SubscriptionClient::EventID eventType,
                                                        const SubscriptionClient::InEventParam & inParam,
                                                        SubscriptionClient::OutEventParam & outParam);
+
+    static void HandleOCSensorBindingEvent(void * appState, ::nl::Weave::Binding::EventType eventType,
+                                          const ::nl::Weave::Binding::InEventParam & inParam,
+                                          ::nl::Weave::Binding::OutEventParam & outParam);
+
+    static void HandleOutboundOCSensorSubscriptionEvent(void * appState, SubscriptionClient::EventID eventType,
+                                                       const SubscriptionClient::InEventParam & inParam,
+                                                       SubscriptionClient::OutEventParam & outParam);
+
     static void HandleInboundSubscriptionEvent(void * aAppState, SubscriptionHandler::EventID eventType,
                                                const SubscriptionHandler::InEventParam & inParam,
                                                SubscriptionHandler::OutEventParam & outParam);
 
-    // Sink Catalog
+    // Sink Catalog for Service
     nl::Weave::Profiles::DataManagement::SingleResourceSinkTraitCatalog::CatalogItem mServiceSinkCatalogStore[kSinkHandle_Max];
     nl::Weave::Profiles::DataManagement::SingleResourceSinkTraitCatalog mServiceSinkTraitCatalog;
+    nl::Weave::Profiles::DataManagement::TraitPath mServiceSinkTraitPaths[kSinkHandle_Max];
+
+    // Sink Catalog for OCSensor
+    nl::Weave::Profiles::DataManagement::SingleResourceSinkTraitCatalog::CatalogItem mOCSensorSinkCatalogStore[kOCSensorSinkHandle_Max];
+    nl::Weave::Profiles::DataManagement::SingleResourceSinkTraitCatalog mOCSensorSinkTraitCatalog;
+    nl::Weave::Profiles::DataManagement::TraitPath mOCSensorSinkTraitPaths[kOCSensorSinkHandle_Max];
 
     // Source Catalog
     nl::Weave::Profiles::DataManagement::SingleResourceSourceTraitCatalog mServiceSourceTraitCatalog;
     nl::Weave::Profiles::DataManagement::SingleResourceSourceTraitCatalog::CatalogItem
         mServiceSourceCatalogStore[kSourceHandle_Max];
 
-    nl::Weave::Profiles::DataManagement::TraitPath mServiceSinkTraitPaths[kSinkHandle_Max];
-
+    // Service
     // Subscription Clients
     nl::Weave::Profiles::DataManagement::SubscriptionClient * mServiceSubClient;
-
     // Subscription Handler
     nl::Weave::Profiles::DataManagement::SubscriptionHandler * mServiceCounterSubHandler;
-
     // Binding
     nl::Weave::Binding * mServiceSubBinding;
-
-    static WDMFeature sWDMFeature;
-    PublisherLock mPublisherLock;
 
     bool mIsSubToServiceEstablished;
     bool mIsServiceCounterSubEstablished;
     bool mIsSubToServiceActivated;
+
+    // OCSensor
+    nl::Weave::Profiles::DataManagement::SubscriptionClient * mOCSensorSubClient;
+    nl::Weave::Profiles::DataManagement::SubscriptionHandler * mOCSensorCounterSubHandler;
+    nl::Weave::Binding * mOCSensorSubBinding;
+    bool mIsSubToOCSensorEstablished;
+    bool mIsOCSensorCounterSubEstablished;
+    bool mIsSubToOCSensorActivated;
+
+    uint64_t mOCSensorNodeId;
+    uint16_t mOCSensorFabricId;
+
+    static WDMFeature sWDMFeature;
+    PublisherLock mPublisherLock;
 };
 
 inline WDMFeature & GetWDMFeature(void)

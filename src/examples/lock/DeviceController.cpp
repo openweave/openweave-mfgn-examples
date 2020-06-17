@@ -499,9 +499,14 @@ void DeviceController::OnIdentifyResponseReceivedHandler(void * appState, uint64
                                                          const IdentifyResponseMessage & respMsg)
 {
     WeaveLogProgress(Support, "OnIdentifyResponseReceivedHandler");
-    DeviceController & _this = GetDeviceController();
 
     WeaveDeviceDescriptor deviceDesc = respMsg.DeviceDesc;
+    // FIXME: because flintstone replies as well.
+    if (deviceDesc.ProductId != 0xFE02) {
+        WeaveLogDetail(Support, "Wrong Product ID [%d]", deviceDesc.ProductId);
+        return;
+    }
+
     char ipAddrStr[64];
     nodeAddr.ToString(ipAddrStr, sizeof(ipAddrStr));
     WeaveLogDetail(Support, "*** IdentifyResponse received from node %" PRIX64 " (%s) ***", nodeId, ipAddrStr);
@@ -509,6 +514,9 @@ void DeviceController::OnIdentifyResponseReceivedHandler(void * appState, uint64
     WeaveLogDetail(Support, "  Source Vendor Id: %04X\n", (unsigned) deviceDesc.VendorId);
     WeaveLogDetail(Support, "  Source Product Id: %04X\n", (unsigned) deviceDesc.ProductId);
     WeaveLogDetail(Support, "  Source Product Revision: %04X\n", (unsigned) deviceDesc.ProductRevision);
+
+    WEAVE_ERROR err = GetWDMFeature().SetupOCSensorSubscriptions(nodeId, deviceDesc.FabricId);
+    WeaveLogProgress(Support, "SetupOCSensorSubscriptions [%d]", err);
 }
 
 // -----------------------------------------------------------------------------

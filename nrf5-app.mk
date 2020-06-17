@@ -37,9 +37,11 @@ LOCK_SRCS = \
     $(PROJECT_ROOT)/src/examples/lock/traits/BoltLockSettingsTraitDataSink.cpp \
     $(PROJECT_ROOT)/src/examples/lock/traits/BoltLockTraitDataSource.cpp \
     $(PROJECT_ROOT)/src/examples/lock/traits/DeviceIdentityTraitDataSource.cpp \
+    $(PROJECT_ROOT)/src/examples/lock/traits/OCSensorSecurityOpenCloseTraitDataSink.cpp \
     $(PROJECT_ROOT)/src/examples/lock/schema/BoltLockSettingsTrait.cpp \
     $(PROJECT_ROOT)/src/examples/lock/schema/BoltLockTrait.cpp \
     $(PROJECT_ROOT)/src/examples/lock/schema/DeviceIdentityTrait.cpp \
+    $(PROJECT_ROOT)/src/examples/lock/schema/nest/trait/security/SecurityOpenCloseTrait.cpp \
     $(PROJECT_ROOT)/src/common/AppTask.cpp \
     $(PROJECT_ROOT)/src/common/LED.cpp \
     $(PROJECT_ROOT)/src/common/Button.cpp \
@@ -166,6 +168,7 @@ INC_DIRS = \
     $(PROJECT_ROOT)/src/common/platforms/nrf5/include \
     $(PROJECT_ROOT)/src/examples/$(APP_DIR)/include \
     $(PROJECT_ROOT)/src/examples/$(APP_DIR)/traits/include \
+    $(PROJECT_ROOT)/src/examples/$(APP_DIR)/schema \
     $(PROJECT_ROOT)/src/examples/$(APP_DIR)/schema/include \
     $(PROJECT_ROOT)/src/examples/$(APP_DIR)/platforms/nrf5/include \
     $(PROJECT_ROOT)/third_party/printf \
