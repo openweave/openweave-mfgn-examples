@@ -424,6 +424,16 @@ void DeviceController::LockOnCommandRequestEventHandler(void * eventData)
     }
 }
 
+void DeviceController::EvaluateAutoLockStateEventHandler(void * eventData)
+{
+    WeaveLogDetail(Support, "DeviceController::EvaluateAutoLockStateEventHandler");
+
+    DeviceController & _this = GetDeviceController();
+
+    bool ocSensorOpen = GetWDMFeature().GetOCSensorSecurityOpenCloseTraitDataSink().IsOpen();
+    WeaveLogDetail(Support, "OCSensor is %s", ocSensorOpen ? "OPEN" : "CLOSED");
+}
+
 void DeviceController::SoftwareUpdateButtonHandler()
 {
     WeaveLogDetail(Support, "Manual Software Update Triggered");
@@ -502,7 +512,8 @@ void DeviceController::OnIdentifyResponseReceivedHandler(void * appState, uint64
 
     WeaveDeviceDescriptor deviceDesc = respMsg.DeviceDesc;
     // FIXME: because flintstone replies as well.
-    if (deviceDesc.ProductId != 0xFE02) {
+    if (deviceDesc.ProductId != 0xFE02)
+    {
         WeaveLogDetail(Support, "Wrong Product ID [%d]", deviceDesc.ProductId);
         return;
     }
@@ -517,6 +528,18 @@ void DeviceController::OnIdentifyResponseReceivedHandler(void * appState, uint64
 
     WEAVE_ERROR err = GetWDMFeature().SetupOCSensorSubscriptions(nodeId, deviceDesc.FabricId);
     WeaveLogProgress(Support, "SetupOCSensorSubscriptions [%d]", err);
+}
+
+// -----------------------------------------------------------------------------
+// OCSensor
+
+void DeviceController::OCSensorStateChange()
+{
+    WeaveLogDetail(Support, "DeviceController::OCSensorStateChange");
+    AppTask::AppTaskEvent appTaskEvent;
+    appTaskEvent.Handler = EvaluateAutoLockStateEventHandler;
+    appTaskEvent.Data    = nullptr;
+    GetAppTask().PostEvent(&appTaskEvent);
 }
 
 // -----------------------------------------------------------------------------

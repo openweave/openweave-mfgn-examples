@@ -172,15 +172,19 @@ void WDMFeature::TearDownSubscriptions(void)
     }
 }
 
+// FIXME: search for device in suryanshu's code
+// "Service" is kind of a misnomer here since we handle both service and device binding events.
 void WDMFeature::HandleServiceBindingEvent(void * appState, ::nl::Weave::Binding::EventType eventType,
                                            const ::nl::Weave::Binding::InEventParam & inParam,
                                            ::nl::Weave::Binding::OutEventParam & outParam)
 {
+    WeaveLogProgress(Support, "*** HandleServiceBindingEvent: %d", eventType);
     Binding * binding = inParam.Source;
 
     switch (eventType)
     {
     case Binding::kEvent_PrepareRequested:
+        WeaveLogProgress(Support, "*** HandleServiceBindingEvent: PrepareRequested");
         outParam.PrepareRequested.PrepareError = binding->BeginConfiguration()
                                                      .Target_ServiceEndpoint(kServiceEndpoint_Data_Management)
                                                      .Transport_UDP_WRM()
@@ -191,18 +195,25 @@ void WDMFeature::HandleServiceBindingEvent(void * appState, ::nl::Weave::Binding
         break;
 
     case Binding::kEvent_PrepareFailed:
-        WeaveLogError(Support, "Failed to prepare service subscription binding: %s", ErrorStr(inParam.PrepareFailed.Reason));
+        WeaveLogProgress(Support, "*** HandleServiceBindingEvent: PrepareFailed");
+        WeaveLogError(Support, "Failed to prepare *** %s *** subscription binding: %s",
+                      (binding == sWDMFeature.mServiceSubBinding) ? "service" : "device", ErrorStr(inParam.PrepareFailed.Reason));
         break;
 
     case Binding::kEvent_BindingFailed:
-        WeaveLogError(Support, "Service subscription binding failed: %s", ErrorStr(inParam.BindingFailed.Reason));
+        WeaveLogProgress(Support, "*** HandleServiceBindingEvent: BindingFailed");
+        WeaveLogError(Support, "%s subscription binding failed: %s",
+                      (binding == sWDMFeature.mServiceSubBinding) ? "service" : "device", ErrorStr(inParam.BindingFailed.Reason));
         break;
 
     case Binding::kEvent_BindingReady:
-        WeaveLogProgress(Support, "Service subscription binding ready");
+        WeaveLogProgress(Support, "*** HandleServiceBindingEvent: BindingReady");
+        WeaveLogProgress(Support, "%s subscription binding ready",
+                         (binding == sWDMFeature.mServiceSubBinding) ? "service" : "device");
         break;
 
     default:
+        WeaveLogProgress(Support, "*** HandleServiceBindingEvent: default");
         nl::Weave::Binding::DefaultEventHandler(appState, eventType, inParam, outParam);
     }
 }
@@ -211,6 +222,7 @@ void WDMFeature::HandleInboundSubscriptionEvent(void * aAppState, SubscriptionHa
                                                 const SubscriptionHandler::InEventParam & inParam,
                                                 SubscriptionHandler::OutEventParam & outParam)
 {
+    WeaveLogProgress(Support, "*** HandleInboundSubscriptionEvent: %d", eventType);
     switch (eventType)
     {
     case SubscriptionHandler::kEvent_OnSubscribeRequestParsed: {
@@ -223,14 +235,14 @@ void WDMFeature::HandleInboundSubscriptionEvent(void * aAppState, SubscriptionHa
                            "Inbound service counter-subscription request received (sub id %016" PRIX64 ", path count %" PRId16 ")",
                            inParam.mSubscribeRequestParsed.mSubscriptionId, inParam.mSubscribeRequestParsed.mNumTraitInstances);
             sWDMFeature.mServiceCounterSubHandler = inParam.mSubscribeRequestParsed.mHandler;
+            binding->SetDefaultResponseTimeout(SERVICE_MESSAGE_RESPONSE_TIMEOUT_MS);
+            binding->SetDefaultWRMPConfig(gWRMPConfigService);
         }
         else
         {
-            break;
+            WeaveLogDetail(Support, "Inbound device subscription request received (sub id %016" PRIX64 ", path count %" PRId16 ")",
+                           inParam.mSubscribeRequestParsed.mSubscriptionId, inParam.mSubscribeRequestParsed.mNumTraitInstances);
         }
-
-        binding->SetDefaultResponseTimeout(SERVICE_MESSAGE_RESPONSE_TIMEOUT_MS);
-        binding->SetDefaultWRMPConfig(gWRMPConfigService);
 
         inParam.mSubscribeRequestParsed.mHandler->AcceptSubscribeRequest(inParam.mSubscribeRequestParsed.mTimeoutSecMin);
         break;
@@ -241,6 +253,10 @@ void WDMFeature::HandleInboundSubscriptionEvent(void * aAppState, SubscriptionHa
         {
             WeaveLogDetail(Support, "Inbound service counter-subscription established");
             sWDMFeature.mIsServiceCounterSubEstablished = true;
+        }
+        else
+        {
+            WeaveLogDetail(Support, "Inbound device subscription established");
         }
         break;
     }
@@ -257,6 +273,10 @@ void WDMFeature::HandleInboundSubscriptionEvent(void * aAppState, SubscriptionHa
             sWDMFeature.mServiceCounterSubHandler       = NULL;
             sWDMFeature.mIsServiceCounterSubEstablished = false;
         }
+        else
+        {
+            WeaveLogProgress(Support, "Inbound device subscription terminated: %s", termDesc);
+        }
         break;
     }
 
@@ -270,6 +290,7 @@ void WDMFeature::HandleOutboundServiceSubscriptionEvent(void * appState, Subscri
                                                         const SubscriptionClient::InEventParam & inParam,
                                                         SubscriptionClient::OutEventParam & outParam)
 {
+    WeaveLogProgress(Support, "*** HandleOutboundServiceSubscriptionEvent: %d", eventType);
     switch (eventType)
     {
     case SubscriptionClient::kEvent_OnSubscribeRequestPrepareNeeded: {
@@ -301,6 +322,7 @@ void WDMFeature::HandleOutboundServiceSubscriptionEvent(void * appState, Subscri
 
         sWDMFeature.mIsSubToServiceEstablished = false;
 
+        // FIXME: different from Suryanshu
         if (inParam.mSubscriptionTerminated.mClient == sWDMFeature.mServiceSubClient)
         {
             // This would happen when the service explicitly terminates the subscription

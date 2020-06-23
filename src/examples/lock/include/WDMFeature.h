@@ -62,15 +62,16 @@ public:
     WEAVE_ERROR Init(void);
     void ProcessTraitChanges(void);
 
-    void TearDownSubscriptionsService(void);
-    void TearDownSubscriptionsOCSensor(void);
+    void TearDownServiceSubscriptions(void);
+    void TearDownOCSensorSubscription(void);
 
     bool AreServiceSubscriptionsEstablished(void);
-    bool AreOCSensorSubscriptionsEstablished(void);
+    bool IsOCSensorSubscriptionEstablished(void);
 
     WEAVE_ERROR SetupOCSensorSubscriptions(uint64_t nodeId, uint64_t fabricId);
 
     BoltLockTraitDataSource & GetBoltLockTraitDataSource(void);
+    OCSensorSecurityOpenCloseTraitDataSink & GetOCSensorSecurityOpenCloseTraitDataSink(void);
 
     nl::Weave::Profiles::DataManagement::SubscriptionEngine mSubscriptionEngine;
 
@@ -94,9 +95,9 @@ private:
 
     enum OCSensorSinkTraitHandle
     {
-      kOCSensorSinkHandle_SecurityOpenCloseTrait = 0,
+        kOCSensorSinkHandle_SecurityOpenCloseTrait = 0,
 
-      kOCSensorSinkHandle_Max
+        kOCSensorSinkHandle_Max
     };
 
     // Published Traits
@@ -110,7 +111,7 @@ private:
     OCSensorSecurityOpenCloseTraitDataSink mOCSensorSecurityOpenCloseTraitSink;
 
     void InitiateSubscriptionToService(void);
-    void InitiateSubscriptionToOCSensor(void);
+    void InitiateSubscriptionToOCSensor(void); // fixme suryanshu has int arg there also should be static because go through event?
 
     static void AsyncProcessChanges(intptr_t arg);
 
@@ -127,12 +128,12 @@ private:
                                                        SubscriptionClient::OutEventParam & outParam);
 
     static void HandleOCSensorBindingEvent(void * appState, ::nl::Weave::Binding::EventType eventType,
-                                          const ::nl::Weave::Binding::InEventParam & inParam,
-                                          ::nl::Weave::Binding::OutEventParam & outParam);
+                                           const ::nl::Weave::Binding::InEventParam & inParam,
+                                           ::nl::Weave::Binding::OutEventParam & outParam);
 
     static void HandleOutboundOCSensorSubscriptionEvent(void * appState, SubscriptionClient::EventID eventType,
-                                                       const SubscriptionClient::InEventParam & inParam,
-                                                       SubscriptionClient::OutEventParam & outParam);
+                                                        const SubscriptionClient::InEventParam & inParam,
+                                                        SubscriptionClient::OutEventParam & outParam);
 
     static void HandleInboundSubscriptionEvent(void * aAppState, SubscriptionHandler::EventID eventType,
                                                const SubscriptionHandler::InEventParam & inParam,
@@ -144,7 +145,8 @@ private:
     nl::Weave::Profiles::DataManagement::TraitPath mServiceSinkTraitPaths[kSinkHandle_Max];
 
     // Sink Catalog for OCSensor
-    nl::Weave::Profiles::DataManagement::SingleResourceSinkTraitCatalog::CatalogItem mOCSensorSinkCatalogStore[kOCSensorSinkHandle_Max];
+    nl::Weave::Profiles::DataManagement::SingleResourceSinkTraitCatalog::CatalogItem
+        mOCSensorSinkCatalogStore[kOCSensorSinkHandle_Max];
     nl::Weave::Profiles::DataManagement::SingleResourceSinkTraitCatalog mOCSensorSinkTraitCatalog;
     nl::Weave::Profiles::DataManagement::TraitPath mOCSensorSinkTraitPaths[kOCSensorSinkHandle_Max];
 
@@ -167,11 +169,8 @@ private:
 
     // OCSensor
     nl::Weave::Profiles::DataManagement::SubscriptionClient * mOCSensorSubClient;
-    nl::Weave::Profiles::DataManagement::SubscriptionHandler * mOCSensorCounterSubHandler;
     nl::Weave::Binding * mOCSensorSubBinding;
     bool mIsSubToOCSensorEstablished;
-    bool mIsOCSensorCounterSubEstablished;
-    bool mIsSubToOCSensorActivated;
 
     uint64_t mOCSensorNodeId;
     uint16_t mOCSensorFabricId;
@@ -188,6 +187,11 @@ inline WDMFeature & GetWDMFeature(void)
 inline BoltLockTraitDataSource & WDMFeature::GetBoltLockTraitDataSource(void)
 {
     return mBoltLockTraitSource;
+}
+
+inline OCSensorSecurityOpenCloseTraitDataSink & WDMFeature::GetOCSensorSecurityOpenCloseTraitDataSink(void)
+{
+    return mOCSensorSecurityOpenCloseTraitSink;
 }
 
 #endif // WDM_FEATURE_H

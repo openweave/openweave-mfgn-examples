@@ -104,8 +104,12 @@ public:
     void SetAutoLockDuration(uint32_t aDurationInSeconds);
     bool IsLockingActionInProgress();
 
+    // OCSensor state changes.
+    void OCSensorStateChange(void);
+
     // Handlers.
     static void LockOnCommandRequestEventHandler(void * data);
+    static void EvaluateAutoLockStateEventHandler(void * data);
 
     // Utility Methods
     void PostLockOnCommandRequestEvent(int32_t aActor, Action_t aAction);

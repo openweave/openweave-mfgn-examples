@@ -34,46 +34,57 @@ using namespace Schema::Nest::Trait::Security;
 using namespace Schema::Nest::Trait::Detector::OpenCloseTrait;
 using namespace Schema::Nest::Trait::Security::SecurityOpenCloseTrait;
 
-OCSensorSecurityOpenCloseTraitDataSink::OCSensorSecurityOpenCloseTraitDataSink() : TraitDataSink(&SecurityOpenCloseTrait::TraitSchema) {}
+OCSensorSecurityOpenCloseTraitDataSink::OCSensorSecurityOpenCloseTraitDataSink() :
+    TraitDataSink(&SecurityOpenCloseTrait::TraitSchema)
+{}
+
+bool OCSensorSecurityOpenCloseTraitDataSink::IsOpen(void)
+{
+    return mSecurityOpenCloseState == OPEN_CLOSE_STATE_CLOSED ? false : true;
+}
 
 WEAVE_ERROR
 OCSensorSecurityOpenCloseTraitDataSink::SetLeafData(PropertyPathHandle aLeafHandle, TLVReader & aReader)
 {
     WEAVE_ERROR err = WEAVE_NO_ERROR;
 
-    WeaveLogError(Support, "OCSensorSecurityOpenCloseTraitDataSink::SetLeafData handle [%d]", aLeafHandle);
+    WeaveLogProgress(Support, "*** OCSensorSecurityOpenCloseTraitDataSink::SetLeafData handle [%d]", aLeafHandle);
     switch (aLeafHandle)
     {
-        case SecurityOpenCloseTrait::kPropertyHandle_OpenCloseState: {
-            WeaveLogError(Support, "kPropertyHandle_OpenCloseState");
-            err = aReader.Get(mState);
-            SuccessOrExit(err);
-            break;
-        }
+    case SecurityOpenCloseTrait::kPropertyHandle_OpenCloseState: {
+        int32_t open_close_state;
+        err = aReader.Get(open_close_state);
+        SuccessOrExit(err);
+        WeaveLogDetail(Support, "OpenCloseState: %d", open_close_state);
 
-        case SecurityOpenCloseTrait::kPropertyHandle_BypassRequested: {
-            /* Bypass is not a supported feature in this example */
-            WeaveLogError(Support, "kPropertyHandle_BypassRequested");
-            bool bypass_requested = false;
-            err                   = aReader.Get(bypass_requested);
-            SuccessOrExit(err);
-            break;
-        }
-
-        case SecurityOpenCloseTrait::kPropertyHandle_FirstObservedAtMs: {
-            WeaveLogError(Support, "kPropertyHandle_FirstObservedAtMs");
-            uint64_t currentTime = 0;
-            err                  = aReader.Get(currentTime);
-            SuccessOrExit(err);
-            break;
-        }
-
-        default: {
-            WeaveLogError(Support, "SecurityOpenCloseTrait::Unexpected Leaf");
-            break;
-        }
+        mSecurityOpenCloseState = open_close_state;
+        GetDeviceController().OCSensorStateChange();
+        break;
     }
 
-    exit:
+    case SecurityOpenCloseTrait::kPropertyHandle_BypassRequested: {
+        /* Bypass is not a supported feature in this example */
+        bool bypass_requested = false;
+        err                   = aReader.Get(bypass_requested);
+        SuccessOrExit(err);
+        WeaveLogDetail(Support, "BypassRequested: %d", bypass_requested);
+        break;
+    }
+
+    case SecurityOpenCloseTrait::kPropertyHandle_FirstObservedAtMs: {
+        uint64_t currentTime = 0;
+        err                  = aReader.Get(currentTime);
+        SuccessOrExit(err);
+        WeaveLogDetail(Support, "FirstObservedAtMs: %llu", currentTime);
+        break;
+    }
+
+    default: {
+        WeaveLogError(Support, "Unexpected Leaf");
+        break;
+    }
+    }
+
+exit:
     return err;
 }

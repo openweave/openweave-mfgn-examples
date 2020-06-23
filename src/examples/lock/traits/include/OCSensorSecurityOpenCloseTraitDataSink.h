@@ -30,12 +30,13 @@ class OCSensorSecurityOpenCloseTraitDataSink : public nl::Weave::Profiles::DataM
 {
 public:
     OCSensorSecurityOpenCloseTraitDataSink();
+    bool IsOpen();
 
 private:
     WEAVE_ERROR SetLeafData(nl::Weave::Profiles::DataManagement::PropertyPathHandle aLeafHandle,
                             nl::Weave::TLV::TLVReader & aReader);
 
-    int32_t mState;
+    int32_t mSecurityOpenCloseState;
 };
 
 #endif /* OCSENSOR_SECURITY_OPEN_CLOSE_TRAIT_DATA_SINK_H */
